@@ -1,0 +1,15 @@
+{
+  "appId": "com.padhleyrr.mppsc",
+  "appName": "MPPSC App",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "GoogleAuth": {
+      "scopes": ["profile", "email"],
+      "serverClientId": "77589429691-REPLACE_WITH_YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": true
+    }
+  }
+}

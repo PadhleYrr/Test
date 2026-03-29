@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MPPSC Complete Prep 2026 — India's #1 MPPSC App</title>
+<meta name="description" content="Complete MPPSC Preparation — Paper 1, 2, 3 with 2000+ MCQs, PYQ, Smart Study, Map Quiz, Notes, Mock Tests. Free for all aspirants.">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1A237E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<!-- Razorpay -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+<div class="logo">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div>
+<div class="logo-title">MPPSC Prep</div>
+<div class="logo-sub">Complete MPPSC 2026 — Paper 1, 2, 3</div>
+</div>
+<button class="sidebar-close" onclick="toggleSidebar()" title="Close menu">✕</button>
+</div>
+</div>
+
+<!-- Language Toggle -->
+<div style="padding:8px 12px">
+<div class="lang-toggle" onclick="i18n.toggle();refreshUI()">
+<span id="lang-indicator">🇮🇳</span>
+<span id="lang-text" style="font-size:11px;color:rgba(255,255,255,.7);font-weight:600">EN / हिं</span>
+</div>
+</div>
+
+<div class="nav-section" data-i18n="study">Study</div>
+<div class="nav-item active" onclick="showPage('dashboard')"><span class="ni">🏠</span><span data-i18n="dashboard">Dashboard</span></div>
+<div class="nav-item" onclick="showPage('syllabus')"><span class="ni">📋</span><span data-i18n="syllabus">Full Syllabus</span><span class="nav-badge new-badge">NEW</span></div>
+<div class="nav-item" onclick="showPage('notes')"><span class="ni">📖</span><span data-i18n="notes">Notes</span></div>
+<div class="nav-item" onclick="showPage('flashcards')"><span class="ni">🃏</span><span data-i18n="flashcards">Flashcards</span></div>
+<div class="nav-item" onclick="showPage('studyplan')"><span class="ni">📅</span><span data-i18n="study_plan">Study Plan</span><span class="nav-badge new-badge">NEW</span></div>
+
+<div class="nav-section" data-i18n="practice">Practice</div>
+<div class="nav-item" onclick="showPage('test')"><span class="ni">✏️</span><span data-i18n="mcq_test">MCQ Test</span><span class="nav-badge" id="total-q-badge">2000+</span></div>
+<div class="nav-item" onclick="showPage('daily')"><span class="ni">📅</span><span data-i18n="daily_10">Daily 10</span></div>
+<div class="nav-item" onclick="showPage('timed')"><span class="ni">⏱️</span><span data-i18n="timed_mock">Timed Mock</span></div>
+<div class="nav-item" onclick="showPage('srsreview')"><span class="ni">🧠</span><span data-i18n="srs_review">Smart Review</span><span class="nav-badge srs-badge" id="srs-count-badge" style="background:#7C3AED;display:none">0</span></div>
+
+<div class="nav-section" data-i18n="resources">Resources</div>
+<div class="nav-item" onclick="showPage('pyq')"><span class="ni">📄</span><span data-i18n="pyq_papers">PYQ Papers</span><span class="nav-badge">4yr</span></div>
+<div class="nav-item" onclick="showPage('maps')"><span class="ni">🗺️</span><span data-i18n="map_quiz">Map Quiz</span></div>
+<div class="nav-item" onclick="showPage('currentaffairs')"><span class="ni">📰</span><span data-i18n="current_affairs">Current Affairs</span><span class="nav-badge new-badge">NEW</span></div>
+<div class="nav-item" onclick="showPage('bookmarkspage')"><span class="ni">🔖</span><span data-i18n="bookmarks">Bookmarks</span><span class="nav-badge" id="bookmark-count-badge" style="display:none">0</span></div>
+
+<div class="nav-section">Analytics</div>
+<div class="nav-item" onclick="showPage('weakareas')"><span class="ni">📊</span><span data-i18n="weak_areas">Weak Areas</span></div>
+<div class="nav-item" onclick="showPage('progress')"><span class="ni">📈</span><span data-i18n="my_progress">My Progress</span></div>
+<div class="nav-item" onclick="showPage('analytics')"><span class="ni">🎯</span><span data-i18n="analytics">Analytics</span><span class="nav-badge new-badge">NEW</span></div>
+
+<div class="nav-section">More</div>
+<div class="nav-item" onclick="showPage('donate')"><span class="ni">❤️</span><span data-i18n="support_us">Support Us</span></div>
+<div class="nav-item" onclick="showPage('settings')"><span class="ni">⚙️</span><span data-i18n="settings">Settings</span><span class="nav-badge new-badge">NEW</span></div>
+<div class="nav-item" onclick="showPage('review')" style="display:none">
+<span class="ni">🚩</span>Review Flags
+<span class="nav-badge" id="flag-count-badge" style="background:#DC2626;color:#fff;display:none">0</span>
+</div>
+
+<div class="nav-bottom">
+<div class="streak-pill">
+<span class="streak-fire">🔥</span>
+<div class="streak-info">
+<div class="streak-days" id="streak-display">0</div>
+<div class="streak-lbl" data-i18n="day_streak">day streak</div>
+</div>
+</div>
+</div>
+</nav>
+
+<main class="main">
+<div class="topbar">
+<div style="display:flex;align-items:center;gap:10px">
+<button class="hamburger" onclick="toggleSidebar()">☰</button>
+<div>
+<div class="page-title" id="pg-title">Dashboard</div>
+<div class="page-sub" id="pg-sub">Your complete study overview</div>
+</div>
+</div>
+<div class="topbar-right">
+<div class="search-box" onclick="showToast('Search: use browser Ctrl+F on Notes page')">🔍 <span data-i18n="search">Search...</span></div>
+</div>
+</div>
+<!-- ═══ DASHBOARD ═══ -->
+<div class="page active" id="page-dashboard">
+<div class="grid-4">
+<div class="stat-card"><div class="stat-accent" style="background:var(--navy)"></div><div class="stat-lbl">Questions Attempted</div><div class="stat-val" id="d-attempted">0</div><div class="stat-delta" id="d-attempted-of" style="color:var(--muted)">of 1021 total</div></div>
+<div class="stat-card"><div class="stat-accent" style="background:var(--success)"></div><div class="stat-lbl">Overall Accuracy</div><div class="stat-val" id="d-accuracy">0%</div><div class="stat-delta" style="color:var(--muted)">correct answer rate</div></div>
+<div class="stat-card"><div class="stat-accent" style="background:var(--saff)"></div><div class="stat-lbl">Study Streak</div><div class="stat-val" id="d-streak">0 🔥</div><div class="stat-delta" style="color:var(--muted)">days in a row</div></div>
+<div class="stat-card"><div class="stat-accent" style="background:var(--danger)"></div><div class="stat-lbl">Flagged Questions</div><div class="stat-val" id="d-flags">0</div><div class="stat-delta" style="color:var(--muted)">reported for review</div></div>
+</div>
+<div class="daily-banner" onclick="startDaily()">
+<div><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800">Today's Daily 10 🎯</div><div style="font-size:12px;opacity:.8;margin-top:3px">10 random questions — builds habit, boosts retention</div></div>
+<button class="daily-btn" onclick="startDaily()">Start Now →</button>
+</div>
+<div class="sec-hd"><div class="sec-title">Chapter Progress</div><div class="sec-link" onclick="showPage('test')">Practice All →</div></div>
+<div class="ch-grid" id="dash-ch-grid"></div>
+<div class="grid-2">
+<div class="card"><div class="sec-hd"><div class="sec-title">Study Heatmap — Last 6 months</div></div>
+<div class="heatmap-grid" id="heatmap"></div>
+<div class="hm-legend">Less <span class="hm-cell hm-0"></span><span class="hm-cell hm-1"></span><span class="hm-cell hm-2"></span><span class="hm-cell hm-3"></span><span class="hm-cell hm-4"></span> More</div>
+</div>
+<div class="card"><div class="sec-hd"><div class="sec-title">Weak Areas</div><div class="sec-link" onclick="showPage('weakareas')">See All →</div></div><div id="dash-weak"></div></div>
+</div>
+</div>
+<!-- ═══ NOTES ═══ -->
+<div class="page" id="page-notes">
+<div class="notes-layout">
+<div class="notes-nav" id="notes-nav"></div>
+<div id="notes-content-area"></div>
+</div>
+</div>
+<!-- ═══ FLASHCARDS ═══ -->
+<div class="page" id="page-flashcards">
+<div class="flash-wrap">
+<div class="card" style="margin-bottom:16px">
+<div class="sec-hd"><div class="sec-title">Flashcard Mode</div></div>
+<div class="chip-row" id="flash-filter">
+<div class="chip chip-all on" onclick="flashChipAll(this)">All Chapters</div>
+</div>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+<div id="flash-count-info" style="font-size:13px;color:var(--muted)">421 cards selected</div>
+<button class="btn-primary" style="width:auto;padding:9px 22px" onclick="startFlash()">Start Flashcards →</button>
+</div>
+</div>
+<div id="flash-session" style="display:none">
+<div class="flash-counter" id="flash-counter">Card 1 of 421</div>
+<div class="flashcard" id="flashcard" onclick="flipCard()">
+<div id="flash-hint" style="font-size:11px;color:var(--muted);margin-bottom:10px;letter-spacing:.5px;font-weight:600">TAP TO REVEAL ANSWER</div>
+<div class="flash-q" id="flash-q"></div>
+<div class="flash-ans" id="flash-ans"></div>
+<div class="flash-expl" id="flash-expl"></div>
+</div>
+<div class="flash-nav" id="flash-nav" style="display:none">
+<button class="flash-know" onclick="flashKnow()">✓ I Know This</button>
+<button class="flash-dontknow" onclick="flashDontKnow()">✗ Study More</button>
+</div>
+<div style="display:flex;justify-content:center;gap:20px;margin-top:10px">
+<span style="font-size:12px;color:var(--success);font-weight:600">✓ Known: <span id="flash-known">0</span></span>
+<span style="font-size:12px;color:var(--danger);font-weight:600">✗ Learning: <span id="flash-learn">0</span></span>
+</div>
+</div>
+</div>
+</div>
+<!-- ═══ MCQ TEST ═══ -->
+<div class="page" id="page-test">
+<div id="test-home-scr">
+<div style="max-width:700px;margin:0 auto">
+<div class="card" style="margin-bottom:14px">
+<div class="sec-hd"><div class="sec-title">Select Test Mode</div></div>
+<div class="mode-grid" id="test-mode-grid">
+<div class="mode-card sel" onclick="selMode(this,0)"><div class="mode-icon">📚</div><div class="mode-name">Full Test</div><div class="mode-desc">All selected questions</div></div>
+<div class="mode-card" onclick="selMode(this,100)"><div class="mode-icon">📋</div><div class="mode-name">Long — 100 Qs</div><div class="mode-desc">Random · ~60 min</div></div>
+<div class="mode-card" onclick="selMode(this,50)"><div class="mode-icon">⚡</div><div class="mode-name">Practice — 50 Qs</div><div class="mode-desc">Random · ~30 min</div></div>
+<div class="mode-card" onclick="selMode(this,25)"><div class="mode-icon">🎯</div><div class="mode-name">Quick — 25 Qs</div><div class="mode-desc">Random · ~15 min</div></div>
+</div>
+</div>
+<div class="card" style="margin-bottom:14px">
+<div class="sec-hd"><div class="sec-title">Filter by Chapter</div><button class="btn-ghost" onclick="selectAllChaps()">Select All</button></div>
+<div class="chip-row" id="ch-filter-chips"></div>
+</div>
+<div class="card" style="margin-bottom:14px" id="pyq-practice-card">
+<div class="sec-hd"><div class="sec-title">📄 Practice PYQ Papers</div><div style="font-size:11px;color:var(--muted)">Full paper MCQ practice</div></div>
+<div class="mode-grid" id="pyq-practice-section"></div>
+</div>
+<button class="btn-primary" onclick="startTest(false)">Start Test →</button>
+</div>
+</div>
+<div id="test-q-scr" style="display:none;max-width:720px;margin:0 auto">
+<div class="q-header">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span class="q-badge" id="qchap-badge">Chapter</span>
+<span class="q-num-pill" id="q-num-badge">Q1</span>
+<span class="q-upd" id="q-upd-badge" style="display:none">Updated 2026</span>
+</div>
+<span id="q-info-text" style="font-size:12px;color:var(--muted)">1/421</span>
+</div>
+<div class="pbar"><div class="pfill" id="q-pfill" style="width:.2%"></div></div>
+<div class="q-card">
+<div class="q-text" id="q-text"></div>
+<div class="opts" id="q-opts"></div>
+<div class="conf-wrap" id="conf-wrap" style="display:none">
+<button class="conf-btn conf-sure" id="conf-sure" onclick="setConf('sure')">✓ Sure</button>
+<button class="conf-btn conf-unsure" id="conf-unsure" onclick="setConf('unsure')">? Unsure</button>
+<span style="font-size:11px;color:var(--muted);align-self:center">Rate your confidence</span>
+</div>
+<div class="ans-box" id="q-ans-box">
+<div class="ans-correct" id="q-ans-correct"></div>
+<div class="ans-expl" id="q-ans-expl"></div>
+<div class="ans-upd" id="q-ans-upd" style="display:none"></div>
+</div>
+</div>
+<div class="q-actions">
+<button class="btn-reveal" id="btn-reveal" onclick="revealAns()">🔍 Reveal Answer</button>
+<button class="btn-next" id="btn-next" style="display:none" onclick="nextQ()">Next →</button>
+<button class="btn-skip" id="btn-skip" onclick="skipQ()">Skip</button>
+<button class="btn-flag" id="btn-flag" onclick="flagQuestion()">🚩 Flag for Review</button>
+</div>
+</div>
+<div id="test-result-scr" style="display:none;max-width:680px;margin:0 auto">
+<div class="card result-big">
+<div style="font-size:32px;margin-bottom:8px">🏆</div>
+<div style="font-family:'Syne',sans-serif;font-size:19px;font-weight:800;margin-bottom:4px">Test Complete!</div>
+<div class="score-circle" id="res-circle">
+<div class="score-pct" id="res-pct">0%</div>
+<div class="score-grade" id="res-grade">Score</div>
+</div>
+<div class="result-grid">
+<div class="rg-item g"><div class="rg-val" id="rg-c">0</div><div class="rg-lbl">Correct</div></div>
+<div class="rg-item r"><div class="rg-val" id="rg-w">0</div><div class="rg-lbl">Wrong</div></div>
+<div class="rg-item o"><div class="rg-val" id="rg-s">0</div><div class="rg-lbl">Skipped</div></div>
+<div class="rg-item"><div class="rg-val" id="rg-t">0</div><div class="rg-lbl">Total</div></div>
+<div class="rg-item"><div class="rg-val" id="rg-a">0%</div><div class="rg-lbl">Accuracy</div></div>
+<div class="rg-item"><div class="rg-val" id="rg-tm">0m</div><div class="rg-lbl">Time</div></div>
+</div>
+<div class="result-btns">
+<button class="btn-primary" style="width:auto;padding:10px 22px" onclick="retakeTest()">Retake</button>
+<button class="btn-secondary" onclick="showReview()">Review Answers</button>
+<button class="btn-ghost" onclick="showPage('dashboard')">Dashboard</button>
+</div>
+</div>
+<div id="review-answers-section" style="display:none;margin-top:16px">
+<div class="sec-hd">
+<div class="sec-title">Answer Review</div>
+<div style="display:flex;gap:6px">
+<button class="btn-ghost" id="rf-all" onclick="filterReview('all')" style="border-color:var(--navy);color:var(--navy)">All</button>
+<button class="btn-ghost" id="rf-wrong" onclick="filterReview('wrong')">Wrong</button>
+<button class="btn-ghost" id="rf-unsure" onclick="filterReview('unsure')">Unsure</button>
+</div>
+</div>
+<div id="review-list-container"></div>
+</div>
+</div>
+</div>
+<!-- ═══ DAILY 10 ═══ -->
+<div class="page" id="page-daily">
+<div style="max-width:500px">
+<div class="daily-banner" style="margin-bottom:16px">
+<div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800">Daily 10 Challenge</div><div style="font-size:12px;opacity:.8;margin-top:3px">10 questions every day</div></div>
+<div style="font-size:32px;font-weight:800;color:#FFD54F;font-family:'Syne',sans-serif">10</div>
+</div>
+<div class="card">
+<div style="font-size:14px;font-weight:600;margin-bottom:5px">Today's session</div>
+<div id="daily-date-info" style="font-size:12px;color:var(--muted);margin-bottom:16px"></div>
+<div style="background:var(--bg);border-radius:12px;padding:16px;text-align:center;margin-bottom:16px">
+<div id="daily-streak-num" style="font-size:36px;font-weight:800;color:var(--navy);font-family:'Syne',sans-serif">0</div>
+<div style="font-size:12px;color:var(--muted)">day streak 🔥</div>
+</div>
+<button class="btn-primary" onclick="startDaily()">Begin Today's 10 Questions →</button>
+</div>
+</div>
+</div>
+<!-- ═══ TIMED MOCK ═══ -->
+<div class="page" id="page-timed">
+<div style="max-width:580px;margin:0 auto" id="timed-home">
+<div class="card" style="text-align:center;padding:28px">
+<div style="font-size:40px;margin-bottom:12px">⏱️</div>
+<div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px">Timed Mock Test</div>
+<div style="font-size:13px;color:var(--muted);margin-bottom:20px">Simulate real exam conditions with live countdown</div>
+<div class="mode-grid" id="timed-mode-grid" style="margin-bottom:16px">
+<div class="mode-card sel" onclick="selTimedMode(this,100,90)"><div class="mode-icon">📝</div><div class="mode-name">Full Mock</div><div class="mode-desc">100 Qs · 90 Minutes</div></div>
+<div class="mode-card" onclick="selTimedMode(this,50,45)"><div class="mode-icon">⚡</div><div class="mode-name">Quick Mock</div><div class="mode-desc">50 Qs · 45 Minutes</div></div>
+</div>
+<button class="btn-primary" onclick="startTimedTest()">Start Timed Mock →</button>
+</div>
+</div>
+<div id="timed-test-wrap" style="display:none;max-width:720px;margin:0 auto">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+<div class="q-timer-box" id="timed-timer">90:00</div>
+<div style="font-size:13px;color:var(--muted)" id="timed-info">Q 1/100</div>
+<button class="btn-ghost" style="color:var(--danger);border-color:#FCA5A5" onclick="endTimedTest()">End Test</button>
+</div>
+<div class="pbar"><div class="pfill" id="timed-pbar" style="width:.2%"></div></div>
+<div class="q-card">
+<div class="q-chapter-tag" id="timed-chap"></div>
+<div class="q-num-pill" id="timed-qnum" style="display:inline-block;margin-bottom:10px">Q1</div>
+<div class="q-text" id="timed-qtext"></div>
+<div class="opts" id="timed-opts"></div>
+<div class="ans-box" id="timed-ans-box">
+<div class="ans-correct" id="timed-ans-correct"></div>
+<div class="ans-expl" id="timed-ans-expl"></div>
+</div>
+</div>
+<div class="q-actions">
+<button class="btn-reveal" id="timed-reveal" onclick="timedReveal()">🔍 Reveal</button>
+<button class="btn-next" id="timed-next" style="display:none" onclick="timedNext()">Next →</button>
+<button class="btn-skip" onclick="timedSkip()">Skip</button>
+</div>
+</div>
+</div>
+<!-- ═══ PYQ PAPERS ═══ -->
+<div class="page" id="page-pyq">
+<div class="pyq-year-tabs">
+<div class="pyq-tab active" data-year="all" onclick="renderPYQ('all');closeSidebarMobile()">All Years</div>
+<div class="pyq-tab" data-year="2024" onclick="renderPYQ('2024');closeSidebarMobile()">2024</div>
+<div class="pyq-tab" data-year="2023" onclick="renderPYQ('2023');closeSidebarMobile()">2023</div>
+<div class="pyq-tab" data-year="2022" onclick="renderPYQ('2022');closeSidebarMobile()">2022</div>
+<div class="pyq-tab" data-year="2021" onclick="renderPYQ('2021');closeSidebarMobile()">2021</div>
+</div>
+<div class="card" style="margin-bottom:14px;background:#EEF0FF;border-color:#C5CAE9">
+<div style="font-size:13px;color:var(--navy);font-weight:600">📋 About PYQ Section</div>
+<div style="font-size:12px;color:var(--muted);margin-top:4px">2021 papers have full MCQ practice (100 Qs each). Click <b>Practice MCQs</b> to attempt questions here, or <b>Download</b> to get the official PDF. 2021 Paper 1 (General Studies) and Paper 2 (Aptitude & GS-II) are fully available.</div>
+</div>
+<div id="pyq-list"></div>
+</div>
+<!-- ═══ MAP QUIZ ═══ -->
+<div class="page" id="page-maps">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+<div>
+<div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800">🗺️ Map Quiz</div>
+<div style="font-size:12px;color:var(--muted)">India states · MP divisions · MP districts — MCQ & typing modes</div>
+</div>
+<a href="maps.html" target="_blank" style="padding:9px 18px;background:var(--navy);color:#fff;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none">Open Full Screen ↗</a>
+</div>
+<div style="background:var(--card);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow)">
+<iframe src="maps.html" style="width:100%;height:75vh;border:none;display:block" id="map-iframe"></iframe>
+</div>
+</div>
+<!-- ═══ WEAK AREAS ═══ -->
+<div class="page" id="page-weakareas">
+<div class="grid-2">
+<div class="card">
+<div class="sec-hd"><div class="sec-title">Chapter-wise Accuracy</div></div>
+<div id="weak-list-full"></div>
+</div>
+<div class="card">
+<div class="sec-hd"><div class="sec-title">Improvement Suggestions</div></div>
+<div id="weak-suggestions" style="font-size:13px;color:var(--muted);line-height:1.8"></div>
+</div>
+</div>
+<div class="card">
+<div class="sec-hd"><div class="sec-title">Smart Revision Mode</div><div style="font-size:12px;color:var(--muted)">Only your previously wrong questions</div></div>
+<div id="smart-rev-info" style="font-size:13px;color:var(--muted);margin-bottom:12px">Complete some tests first to unlock smart revision.</div>
+<button class="btn-primary" style="width:auto;padding:10px 22px" onclick="startSmartRevision()">Start Smart Revision →</button>
+</div>
+</div>
+<!-- ═══ PROGRESS ═══ -->
+<div class="page" id="page-progress">
+<div class="grid-4" id="prog-stats"></div>
+<div class="card" style="margin-bottom:16px">
+<div class="sec-hd"><div class="sec-title">Study Heatmap — Last 6 months</div></div>
+<div class="heatmap-grid" id="heatmap2"></div>
+<div class="hm-legend">Less <span class="hm-cell hm-0"></span><span class="hm-cell hm-1"></span><span class="hm-cell hm-2"></span><span class="hm-cell hm-3"></span><span class="hm-cell hm-4"></span> More</div>
+</div>
+<div class="card">
+<div class="sec-hd"><div class="sec-title">Chapter Progress Rings</div></div>
+<div class="rings-grid" id="progress-rings"></div>
+</div>
+</div>
+<!-- ═══ REVIEW FLAGS ═══ -->
+<div class="page" id="page-review">
+<div class="grid-3" style="margin-bottom:20px">
+<div class="stat-card"><div class="stat-accent" style="background:var(--danger)"></div><div class="stat-lbl">Total Flagged</div><div class="stat-val" id="rev-total">0</div></div>
+<div class="stat-card"><div class="stat-accent" style="background:var(--warn)"></div><div class="stat-lbl">Pending Review</div><div class="stat-val" id="rev-pending">0</div></div>
+<div class="stat-card"><div class="stat-accent" style="background:var(--success)"></div><div class="stat-lbl">Resolved</div><div class="stat-val" id="rev-resolved">0</div></div>
+</div>
+<div class="card">
+<div class="sec-hd">
+<div class="sec-title">Flagged Questions</div>
+<div style="font-size:12px;color:var(--muted)">Community-reported · Admin can mark resolved</div>
+</div>
+<div id="flags-list"></div>
+</div>
+</div>
+<!-- FLAG MODAL — using fixed positioning properly -->
+<div id="flag-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;align-items:center;justify-content:center">
+<div style="background:#fff;border-radius:16px;padding:26px;max-width:460px;width:calc(100% - 40px);margin:20px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+<div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:5px">🚩 Flag for Review</div>
+<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Report incorrect answers, outdated info, or confusing questions</div>
+<div id="flag-q-preview" style="background:#F4F6FB;border-radius:8px;padding:12px;font-size:13px;font-weight:600;margin-bottom:14px;color:var(--text);border-left:3px solid var(--danger)"></div>
+<div style="font-size:12px;font-weight:700;margin-bottom:10px;color:var(--text)">Reason:</div>
+<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+<label style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer"><input type="radio" name="fr" value="wrong_answer" checked> Wrong correct answer marked</label>
+<label style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer"><input type="radio" name="fr" value="outdated"> Outdated information (2026 update needed)</label>
+<label style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer"><input type="radio" name="fr" value="confusing"> Confusing or ambiguous question</label>
+<label style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer"><input type="radio" name="fr" value="typo"> Spelling or typo error</label>
+</div>
+<textarea id="flag-note" placeholder="Additional details (optional)..." style="width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:68px;margin-bottom:14px;background:var(--bg);color:var(--text)"></textarea>
+<div style="display:flex;gap:10px">
+<button class="btn-primary" style="flex:1" onclick="submitFlag()">Submit Report</button>
+<button class="btn-ghost" onclick="closeFlagModal()">Cancel</button>
+</div>
+</div>
+</div>
+<!-- ═══ DONATE PAGE ═══ -->
+<div class="page" id="page-donate">
+
+  <!-- Hero -->
+  <div style="background:var(--navy);border-radius:var(--radius);padding:28px;text-align:center;margin-bottom:20px;color:#fff">
+    <div style="font-size:44px;margin-bottom:10px">❤️</div>
+    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px">Support MP GK Portal</div>
+    <div style="font-size:13px;opacity:.75;line-height:1.6">Built with love for MPPSC aspirants across Madhya Pradesh.<br>Your support keeps it free and growing!</div>
+  </div>
+
+  <!-- UPI -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="sec-title" style="margin-bottom:14px">Pay via UPI</div>
+    <div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:8px">Send to UPI ID</div>
+    <div onclick="dnCopyUPI()" style="background:#F0F4FF;border:2px dashed #93B4F4;border-radius:12px;padding:16px;text-align:center;cursor:pointer;margin-bottom:0">
+      <div id="dn-upi-txt" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--navy);letter-spacing:.5px">padhleyrr@upi</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px">MP GK Portal — PadhleYrr</div>
+      <div style="font-size:12px;color:var(--saff);margin-top:5px;font-weight:600">📋 Tap to copy</div>
+    </div>
+  </div>
+
+  <!-- QR -->
+  <div class="card" style="margin-bottom:16px;text-align:center">
+    <div class="sec-title" style="margin-bottom:14px;text-align:left">Scan QR Code</div>
+    <!-- Replace the div below with <img src="upi-qr.png" style="width:180px;border-radius:12px"> once you have the QR image -->
+    <div style="width:180px;height:180px;background:#F0F4FF;border:2px dashed #93B4F4;border-radius:12px;margin:0 auto 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);font-size:12px;gap:6px">
+      <span style="font-size:30px">📱</span>
+      <span>Add UPI QR image here</span>
+      <span style="font-size:10px">Replace with upi-qr.png</span>
+    </div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.7">Open any UPI app → Scan → Enter amount → Pay<br>Works with GPay, PhonePe, Paytm, BHIM &amp; all UPI apps</div>
+  </div>
+
+  <div style="text-align:center;font-size:12px;color:var(--muted);line-height:1.8;padding:8px 0 20px">
+    🙏 Thank you for supporting MPPSC aspirants across Madhya Pradesh!<br>
+    Made with ❤️ by <b>PadhleYrr</b> from Jabalpur, MP
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var UPI='padhleyrr@upi';
+  window.dnSetAmt=function(v,btn){
+    document.getElementById('dn-amt-input').value=v;
+    document.querySelectorAll('.dn-amt').forEach(function(b){b.style.borderColor='var(--border)';b.style.background='#fff';b.style.color='var(--text)';});
+    btn.style.borderColor='var(--navy)';btn.style.background='#EEF2FF';btn.style.color='var(--navy)';
+  };
+  function getAmt(){return parseInt(document.getElementById('dn-amt-input').value)||21;}
+  window.dnCopyUPI=function(){
+    var el=document.getElementById('dn-upi-txt');
+    var orig=el.textContent;
+    if(navigator.clipboard){navigator.clipboard.writeText(UPI).then(function(){el.textContent='✅ Copied!';setTimeout(function(){el.textContent=orig;},2000);});}
+    else{var t=document.createElement('textarea');t.value=UPI;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();el.textContent='✅ Copied!';setTimeout(function(){el.textContent=orig;},2000);}
+  };
+  window.dnGPay=function(){var a=getAmt();window.location.href='tez://upi/pay?pa='+UPI+'&pn=MPGKPortal&am='+a+'&cu=INR';setTimeout(function(){window.location.href='upi://pay?pa='+UPI+'&pn=MPGKPortal&am='+a+'&cu=INR';},1500);};
+  window.dnPhonePe=function(){var a=getAmt();window.location.href='phonepe://pay?pa='+UPI+'&pn=MPGKPortal&am='+a+'&cu=INR';setTimeout(function(){window.location.href='upi://pay?pa='+UPI+'&pn=MPGKPortal&am='+a+'&cu=INR';},1500);};
+  window.dnPaytm=function(){var a=getAmt();window.location.href='paytmmp://pay?pa='+UPI+'&pn=MPGKPortal&am='+a+'&cu=INR';setTimeout(function(){window.location.href='upi://pay?pa='+UPI+'&pn=MPGKPortal&am='+a+'&cu=INR';},1500);};
+})();
+</script>
+
+
+<!-- ═══ FULL SYLLABUS ═══ -->
+<div class="page" id="page-syllabus">
+<div style="max-width:800px;margin:0 auto">
+<div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,#1A237E,#283593);color:#fff;border:0">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="font-size:32px">📋</div>
+<div>
+<div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800">Complete MPPSC Syllabus</div>
+<div style="font-size:12px;opacity:.7;margin-top:2px">Paper 1 (GS) + Paper 2 (CSAT) + Paper 3 (MP GK) — Full Coverage</div>
+</div>
+</div>
+</div>
+<div id="syllabus-tree"></div>
+</div>
+</div>
+
+<!-- ═══ STUDY PLAN ═══ -->
+<div class="page" id="page-studyplan">
+<div style="max-width:700px;margin:0 auto">
+<div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,#0D47A1,#1565C0);color:#fff;border:0">
+<div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800">📅 30-Day Study Plan</div>
+<div style="font-size:12px;opacity:.7;margin-top:4px">Auto-generated based on MPPSC syllabus. Mark tasks done daily!</div>
+</div>
+<div id="study-plan-list"></div>
+</div>
+</div>
+
+<!-- ═══ SMART REVIEW (SRS) ═══ -->
+<div class="page" id="page-srsreview">
+<div style="max-width:700px;margin:0 auto">
+<div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,#4A148C,#7B1FA2);color:#fff;border:0">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="font-size:32px">🧠</div>
+<div>
+<div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800">Spaced Repetition Review</div>
+<div style="font-size:12px;opacity:.7;margin-top:2px">Questions you got wrong come back at optimal intervals (1→3→7→14→30 days)</div>
+</div>
+</div>
+</div>
+<div class="grid-4" id="srs-stats-grid" style="margin-bottom:16px"></div>
+<div id="srs-review-area"></div>
+</div>
+</div>
+
+<!-- ═══ BOOKMARKS PAGE ═══ -->
+<div class="page" id="page-bookmarkspage">
+<div style="max-width:700px;margin:0 auto">
+<div class="card" style="margin-bottom:16px">
+<div class="sec-hd"><div class="sec-title">🔖 Bookmarked Questions</div><div class="sec-link" id="bookmark-total-count">0 saved</div></div>
+<div id="bookmarks-list"></div>
+</div>
+</div>
+</div>
+
+<!-- ═══ CURRENT AFFAIRS ═══ -->
+<div class="page" id="page-currentaffairs">
+<div style="max-width:700px;margin:0 auto">
+<div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,#E65100,#FF6D00);color:#fff;border:0">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="font-size:32px">📰</div>
+<div>
+<div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800">Current Affairs — March 2026</div>
+<div style="font-size:12px;opacity:.7;margin-top:2px">Daily updates · National · International · MP Special</div>
+</div>
+</div>
+</div>
+<div id="current-affairs-list"></div>
+</div>
+</div>
+
+<!-- ═══ ANALYTICS ═══ -->
+<div class="page" id="page-analytics">
+<div style="max-width:800px;margin:0 auto">
+<div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,#1A237E,#0D47A1);color:#fff;border:0">
+<div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800">🎯 Performance Analytics</div>
+<div style="font-size:12px;opacity:.7;margin-top:4px">Paper-wise · Daily trend · Rank prediction · Time invested</div>
+</div>
+<div class="grid-4" id="analytics-overview-grid" style="margin-bottom:16px"></div>
+<div class="grid-2" style="margin-bottom:16px">
+<div class="card" id="analytics-daily-chart"></div>
+<div class="card" id="analytics-paper-wise"></div>
+</div>
+<div class="card" id="analytics-rank-prediction" style="margin-bottom:16px"></div>
+</div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div class="page" id="page-settings">
+<div style="max-width:500px;margin:0 auto">
+<div class="card" style="margin-bottom:16px">
+<div class="sec-hd"><div class="sec-title">⚙️ App Settings</div></div>
+<div class="setting-row">
+<div>
+<div class="setting-label">🌐 Language / भाषा</div>
+<div class="setting-desc">Switch between English and Hindi</div>
+</div>
+<div class="setting-action">
+<button class="btn-ghost" onclick="i18n.toggle();refreshUI()" id="lang-toggle-btn">EN / हिं</button>
+</div>
+</div>
+<div class="setting-row">
+<div>
+<div class="setting-label">🔔 Daily Reminders</div>
+<div class="setting-desc">Get notification to study daily</div>
+</div>
+<div class="setting-action">
+<label class="switch"><input type="checkbox" id="setting-notifications" onchange="toggleNotifications(this.checked)"><span class="slider"></span></label>
+</div>
+</div>
+<div class="setting-row">
+<div>
+<div class="setting-label">🌙 Dark Mode</div>
+<div class="setting-desc">Coming soon in v2.1</div>
+</div>
+<div class="setting-action">
+<label class="switch"><input type="checkbox" disabled><span class="slider" style="opacity:.4"></span></label>
+</div>
+</div>
+<div class="setting-row">
+<div>
+<div class="setting-label">📱 App Version</div>
+<div class="setting-desc">v2.0.0 — Full MPPSC Edition</div>
+</div>
+</div>
+<div class="setting-row">
+<div>
+<div class="setting-label">🗑️ Reset All Progress</div>
+<div class="setting-desc">Clear all data including SRS, bookmarks, history</div>
+</div>
+<div class="setting-action">
+<button class="btn-danger" onclick="if(confirm('Are you sure? This cannot be undone!')){localStorage.clear();location.reload();}">Reset</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+<script src="data_q.js"></script>
+<script src="data_q_paper1.js"></script>
+<script src="data_q_paper2.js"></script>
+<script src="pyq_2024_paper1.js"></script>
+<script src="pyq_2024_paper2.js"></script>
+<script src="pyq_2023_paper1.js"></script>
+<script src="pyq_2023_paper2.js"></script>
+<script src="pyq_2022_paper1.js"></script>
+<script src="pyq_2022_paper2.js"></script>
+<script src="pyq_2021_paper1.js"></script>
+<script src="pyq_2021_paper2.js"></script>
+<script src="data_pyq.js"></script>
+<script src="data_notes.js"></script>
+<script src="data_notes_extended.js"></script>
+<script src="data_syllabus.js"></script>
+<script src="i18n.js"></script>
+<script src="smart_study.js"></script>
+<script src="app.js"></script>
+<script src="app_v2_additions.js"></script>
+<script src="auth.js"></script>
+<script src="updater.js"></script>
+<script>
+// Register service worker for offline support
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js').catch(function(e) { console.log('SW not registered:', e); });
+  });
+}
+</script>
+</body>
+</html>
