@@ -1,10 +1,24 @@
 {
   "name": "mppsc-app",
-  "version": "1.0.0",
-  "description": "MPPSC Preparation App",
+  "version": "1.0.5",
+  "description": "MP GK Portal — MPPSC 2026 Complete Preparation App",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Static app — no build step required'",
+    "sync": "npx cap sync android",
+    "open": "npx cap open android"
+  },
   "dependencies": {
     "@capacitor/android": "^6.0.0",
+    "@capacitor/app": "^6.0.0",
     "@capacitor/cli": "^6.0.0",
-    "@capacitor/core": "^6.0.0"
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/haptics": "^6.0.0",
+    "@capacitor/keyboard": "^6.0.0",
+    "@capacitor/network": "^6.0.0",
+    "@capacitor/push-notifications": "^6.0.0",
+    "@capacitor/splash-screen": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0",
+    "@capacitor/toast": "^6.0.0"
   }
 }

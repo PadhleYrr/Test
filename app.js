@@ -18,7 +18,12 @@ const PAGE_META = {
   progress:{title:'My Progress',sub:'Study heatmap & chapter-wise progress rings'},
   review:{title:'Review Flags',sub:'Community-reported questions — admin panel'},
   weakareas:{title:'Weak Areas',sub:'Focus on what needs improvement'},
-  donate:{title:'Support Us ❤️',sub:'Help keep MP GK Portal free & growing'}
+  donate:{title:'Support Us ❤️',sub:'Help keep MP GK Portal free & growing'},
+  smartstudy:{title:'Smart Revision',sub:'Spaced repetition — optimal review intervals'},
+  syllabus:{title:'Full Syllabus',sub:'Paper 1 · Paper 2 · Paper 3 — Complete MPPSC Coverage'},
+  bookmarkspage:{title:'Bookmarks',sub:'Your saved questions'},
+  currentaffairs:{title:'Current Affairs',sub:'Daily updates — National · MP · International'},
+  settings:{title:'Settings',sub:'Language, notifications, and more'},
 };
 
 // ── STATE ──────────────────────────────────────
@@ -108,7 +113,16 @@ function closeSidebarMobile() {
     if (sb) sb.classList.remove('open');
   }
 }
+// ── PAGE NAVIGATION STACK (for Android back button) ──────
+let _pageStack = ['dashboard'];  // stack of page IDs
+let _currentPageId = 'dashboard';
+
 function showPage(id, skipTestReset) {
+  // Push to stack only if navigating to a different page
+  if (id !== _currentPageId) {
+    _pageStack.push(id);
+    _currentPageId = id;
+  }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const pg = el('page-' + id);
@@ -133,6 +147,12 @@ function showPage(id, skipTestReset) {
   if (id === 'review') renderReviewPage();
   if (id === 'test' && !skipTestReset) resetTestHome();
   if (id === 'daily') renderDailyPage();
+  if (id === 'currentaffairs') { if (typeof renderCurrentAffairs === 'function') renderCurrentAffairs(); }
+  if (id === 'bookmarkspage')  { if (typeof renderBookmarks      === 'function') renderBookmarks(); }
+  if (id === 'syllabus')       { if (typeof renderSyllabus       === 'function') renderSyllabus(); }
+  if (id === 'settings')       { if (typeof _renderThemeGrid     === 'function') setTimeout(_renderThemeGrid, 60); }
+  if (id === 'smartstudy')     { if (typeof renderSRS            === 'function') renderSRS(); }
+  if (id === 'maps')           { _initMapSPA(); }
   closeSidebarMobile();
 }
 // Navigate to test page WITHOUT resetting — used when launching a test directly
@@ -870,329 +890,175 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
-// ═══════════════════════════════════════════════════════════════
-//  APP V2 ADDITIONS — New page renderers for v2.0 features
-//  This file is appended after existing app.js logic
-// ═══════════════════════════════════════════════════════════════
 
-// ── ALL QUESTIONS COMBINED ─────────────────────────────────────
-function getAllQuestions() {
-  var all = (typeof Q !== 'undefined' ? Q : []);
-  if (typeof Q_PAPER1 !== 'undefined') all = all.concat(Q_PAPER1);
-  if (typeof Q_PAPER2 !== 'undefined') all = all.concat(Q_PAPER2);
-  return all;
-}
 
-// ── SYLLABUS TREE ──────────────────────────────────────────────
-function renderSyllabus() {
-  var wrap = el('syllabus-tree'); if (!wrap) return;
-  wrap.innerHTML = '';
-  Object.entries(SYLLABUS).forEach(function(entry) {
-    var key = entry[0], paper = entry[1];
-    var paperCard = document.createElement('div');
-    paperCard.className = 'card';
-    paperCard.style.marginBottom = '14px';
-    var html = '<div class="sec-hd"><div class="sec-title">' + paper.icon + ' ' + (i18n.currentLang==='hi'?paper.nameHi:paper.name) + '</div></div>';
-    paper.subjects.forEach(function(subj) {
-      html += '<div class="syllabus-subject">';
-      html += '<div class="syllabus-subj-header" onclick="this.parentElement.classList.toggle(\'open\')">';
-      html += '<span>' + subj.icon + ' ' + (i18n.currentLang==='hi'?subj.nameHi:subj.name) + '</span>';
-      html += '<span class="syllabus-arrow">▸</span></div>';
-      html += '<div class="syllabus-topics">';
-      subj.topics.forEach(function(topic) {
-        var topicQCount = getAllQuestions().filter(function(q){return q.t===topic.id}).length;
-        html += '<div class="syllabus-topic">';
-        html += '<div class="syllabus-topic-name">' + (i18n.currentLang==='hi'?topic.nameHi:topic.name);
-        if(topicQCount>0) html += ' <span class="nav-badge" style="font-size:9px">'+topicQCount+' Q</span>';
-        html += '</div>';
-        if(topic.subtopics){
-          html += '<div class="syllabus-subtopics">' + topic.subtopics.join(' • ') + '</div>';
-        }
-        html += '</div>';
-      });
-      html += '</div></div>';
-    });
-    paperCard.innerHTML = html;
-    wrap.appendChild(paperCard);
-  });
-}
+// ── MAP SPA — LAZY LOAD INLINE ────────────────────────────
+let _mapSPALoaded = false;
 
-// ── STUDY PLAN ─────────────────────────────────────────────────
-function renderStudyPlan() {
-  var wrap = el('study-plan-list'); if (!wrap) return;
-  var plan = StudyPlanner.getDefaultPlan();
-  var today = new Date().toDateString();
-  wrap.innerHTML = '';
-  plan.forEach(function(day, idx) {
-    var dayDate = new Date(day.date).toDateString();
-    var isToday = dayDate === today;
-    var isPast = new Date(day.date) < new Date(today);
-    var progress = StudyPlanner.getDayProgress(idx);
-    var card = document.createElement('div');
-    card.className = 'card' + (isToday ? ' plan-today' : '');
-    card.style.marginBottom = '10px';
-    if(isPast && !isToday) card.style.opacity = '0.6';
-    var dateStr = new Date(day.date).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-    var h = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-    h += '<div><span style="font-weight:700;font-size:13px">Day '+day.day+'</span>';
-    h += '<span style="font-size:11px;color:var(--muted);margin-left:8px">'+dateStr+'</span>';
-    if(isToday) h += ' <span class="nav-badge" style="background:var(--saff)">TODAY</span>';
-    h += '</div>';
-    h += '<span style="font-size:12px;font-weight:700;color:'+(progress===100?'var(--success)':'var(--muted)')+'">'+progress+'%</span></div>';
-    h += '<div style="font-family:Syne;font-size:14px;font-weight:700;margin-bottom:8px">'+(day.type==='revision'?'🔄 ':'📘 ')+(i18n.currentLang==='hi'?(day.titleHi||day.title):day.title)+'</div>';
-    day.tasks.forEach(function(task, ti) {
-      var label = i18n.currentLang==='hi'?(task.labelHi||task.label):task.label;
-      h += '<div class="plan-task'+(task.done?' done':'')+'" onclick="markPlanTask('+idx+','+ti+')">';
-      h += '<span class="plan-check">'+(task.done?'✅':'⬜')+'</span> '+label+'</div>';
-    });
-    card.innerHTML = h;
-    wrap.appendChild(card);
-  });
-}
-function markPlanTask(dayIdx, taskIdx) {
-  StudyPlanner.markTaskDone(dayIdx, taskIdx);
-  renderStudyPlan();
-  showToast('Task marked done! ✅', '#15803D');
-}
+function _initMapSPA() {
+  const container = document.getElementById('map-spa-container');
+  if (!container) return;
 
-// ── SRS REVIEW ─────────────────────────────────────────────────
-function renderSRSReview() {
-  var statsGrid = el('srs-stats-grid');
-  var area = el('srs-review-area');
-  if(!statsGrid||!area) return;
-  var stats = SRS.getStats();
-  statsGrid.innerHTML = 
-    '<div class="stat-card"><div class="stat-accent" style="background:#7C3AED"></div><div class="stat-lbl">Due Today</div><div class="stat-val">'+stats.dueToday+'</div></div>'+
-    '<div class="stat-card"><div class="stat-accent" style="background:var(--success)"></div><div class="stat-lbl">Mastered</div><div class="stat-val">'+stats.mastered+'</div></div>'+
-    '<div class="stat-card"><div class="stat-accent" style="background:var(--warn)"></div><div class="stat-lbl">Learning</div><div class="stat-val">'+stats.learning+'</div></div>'+
-    '<div class="stat-card"><div class="stat-accent" style="background:var(--danger)"></div><div class="stat-lbl">Need Review</div><div class="stat-val">'+stats.newWrong+'</div></div>';
-  
-  var queue = SRS.getReviewQueue();
-  if(queue.length === 0) {
-    area.innerHTML = '<div class="card" style="text-align:center;padding:40px"><div style="font-size:40px;margin-bottom:12px">🎉</div><div style="font-family:Syne;font-size:16px;font-weight:700">All caught up!</div><div style="font-size:13px;color:var(--muted);margin-top:4px">No questions due for review. Keep practicing to build your SRS queue.</div></div>';
-  } else {
-    area.innerHTML = '<div class="card"><div class="sec-hd"><div class="sec-title">🧠 '+queue.length+' Questions Due</div></div><button class="btn-primary" onclick="startSRSSession()" style="width:auto;padding:10px 24px">Start Review Session →</button></div>';
-  }
-  updateSRSBadge();
-}
-function startSRSSession() {
-  var queue = SRS.getReviewQueue();
-  if(!queue.length){showToast('No questions due!');return;}
-  var allQ = getAllQuestions();
-  var pool = [];
-  queue.forEach(function(item){
-    var found = allQ.find(function(q){return SRS.hashQ(q.q)===item.hash;});
-    if(found) pool.push(found);
-  });
-  if(!pool.length){showToast('Questions not found in current set');return;}
-  testMode = 0;
-  appState.pool = pool.slice(0,30);
-  appState.ans = new Array(appState.pool.length).fill(null);
-  appState.revArr = new Array(appState.pool.length).fill(false);
-  appState.conf = new Array(appState.pool.length).fill(null);
-  appState.cur = 0; appState.startTime = Date.now();
-  launchTestPage();
-  el('test-home-scr').style.display='none';
-  el('test-q-scr').style.display='block';
-  el('test-result-scr').style.display='none';
-  renderQ();
-}
-function updateSRSBadge() {
-  var badge = el('srs-count-badge');
-  if(!badge) return;
-  var stats = SRS.getStats();
-  if(stats.dueToday > 0) { badge.style.display=''; badge.textContent=stats.dueToday; }
-  else { badge.style.display='none'; }
-}
-
-// ── BOOKMARKS PAGE ─────────────────────────────────────────────
-function renderBookmarksPage() {
-  var list = el('bookmarks-list');
-  var countEl = el('bookmark-total-count');
-  if(!list) return;
-  var bm = Bookmarks.get();
-  if(countEl) countEl.textContent = bm.length + ' saved';
-  if(!bm.length) {
-    list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">No bookmarks yet. Bookmark questions during tests!</div>';
+  // Already initialized — just invalidate size so Leaflet re-renders
+  if (_mapSPALoaded) {
+    setTimeout(() => {
+      if (window._spaLeafletMap) {
+        window._spaLeafletMap.invalidateSize();
+      }
+    }, 100);
     return;
   }
-  list.innerHTML = '';
-  bm.forEach(function(b,i){
-    var d = document.createElement('div');
-    d.style.cssText='padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px';
-    d.innerHTML = '<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px">'+b.c+'</div>'+
-      '<div style="font-size:13px;font-weight:600;margin-bottom:6px">'+b.q+'</div>'+
-      '<div style="font-size:12px;color:var(--success);font-weight:600">✔ '+b.o[b.a]+'</div>'+
-      '<div style="font-size:11px;color:var(--muted);margin-top:4px">'+b.n+'</div>'+
-      '<button class="btn-ghost" style="margin-top:6px;font-size:11px" onclick="Bookmarks.toggle({q:\''+b.q.replace(/'/g,"\\'")+'\'});renderBookmarksPage()">Remove Bookmark</button>';
-    list.appendChild(d);
-  });
-  updateBookmarkBadge();
-}
-function updateBookmarkBadge() {
-  var badge = el('bookmark-count-badge');
-  if(!badge) return;
-  var count = Bookmarks.getCount();
-  if(count>0){badge.style.display='';badge.textContent=count;}
-  else{badge.style.display='none';}
+
+  // Lazy-load the maps script
+  const script = document.createElement('script');
+  script.src = 'maps-spa.js';
+  script.onerror = () => {
+    // Fallback: open maps.html in a new overlay
+    _openMapsOverlay();
+  };
+  document.head.appendChild(script);
+  _mapSPALoaded = true;
 }
 
-// ── CURRENT AFFAIRS ────────────────────────────────────────────
-function renderCurrentAffairs() {
-  var list = el('current-affairs-list'); if(!list) return;
-  var affairs = [
-    {date:'29 Mar 2026',cat:'National',catHi:'राष्ट्रीय',title:'Union Budget 2026-27 Highlights',titleHi:'केंद्रीय बजट 2026-27 की मुख्य बातें',body:'Key announcements include increased allocation for education, defence, and infrastructure. Income tax rebate limit raised.'},
-    {date:'28 Mar 2026',cat:'MP Special',catHi:'म.प्र. विशेष',title:'MP Government launches new Skill Development Scheme',titleHi:'म.प्र. सरकार ने नई कौशल विकास योजना शुरू की',body:'Chief Minister announced ₹500 crore allocation for skill training of 1 lakh youth across 55 districts.'},
-    {date:'27 Mar 2026',cat:'International',catHi:'अंतर्राष्ट्रीय',title:'India elected to UN Security Council (non-permanent)',titleHi:'भारत संयुक्त राष्ट्र सुरक्षा परिषद का अस्थायी सदस्य चुना गया',body:'India secured a non-permanent seat for 2027-28 term with overwhelming majority.'},
-    {date:'26 Mar 2026',cat:'Science',catHi:'विज्ञान',title:'ISRO Gaganyaan unmanned test flight successful',titleHi:'इसरो गगनयान का मानव रहित परीक्षण सफल',body:'The G1 mission successfully completed all objectives including crew module recovery from Bay of Bengal.'},
-    {date:'25 Mar 2026',cat:'Economy',catHi:'अर्थव्यवस्था',title:'India GDP growth rate at 7.2% for FY26',titleHi:'भारत की GDP वृद्धि दर FY26 में 7.2%',body:'India remains fastest-growing major economy. Services and manufacturing led the growth.'},
-    {date:'24 Mar 2026',cat:'MP Special',catHi:'म.प्र. विशेष',title:'MP tops in Tiger population for 4th consecutive year',titleHi:'म.प्र. लगातार चौथे वर्ष बाघों की संख्या में अव्वल',body:'With 850+ tigers, MP maintains its position as Tiger State of India.'},
+function openMapFullscreen() {
+  _openMapsOverlay();
+}
+
+function _openMapsOverlay() {
+  if (document.getElementById('map-fullscreen-overlay')) return;
+  const el = document.createElement('div');
+  el.id = 'map-fullscreen-overlay';
+  el.style.cssText = 'position:fixed;inset:0;z-index:99990;background:#000;display:flex;flex-direction:column';
+  el.innerHTML = `
+    <div style="background:#1A237E;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <span style="color:#fff;font-weight:700;font-size:14px">🗺️ Map Quiz</span>
+      <button onclick="document.getElementById('map-fullscreen-overlay').remove()"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer">✕ Close</button>
+    </div>
+    <iframe src="maps.html" style="flex:1;border:none;width:100%;height:100%"></iframe>
+  `;
+  document.body.appendChild(el);
+}
+
+// ══════════════════════════════════════════════
+//  ANDROID BACK BUTTON SYSTEM
+// ══════════════════════════════════════════════
+
+function _handleBackButton() {
+  // Priority 1: close any open modals/overlays
+  const overlays = [
+    'admin-panel', 'paywall-modal', 'account-modal',
+    'flag-modal', 'map-fullscreen-overlay', 'quit-quiz-confirm'
   ];
-  list.innerHTML = '';
-  affairs.forEach(function(a){
-    var d = document.createElement('div');
-    d.className = 'card';
-    d.style.marginBottom = '10px';
-    var catColor = a.cat==='National'?'var(--navy)':a.cat==='MP Special'?'var(--saff)':a.cat==='International'?'#7C3AED':a.cat==='Science'?'var(--success)':'var(--warn)';
-    d.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
-      '<span style="background:'+catColor+';color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px">'+(i18n.currentLang==='hi'?a.catHi:a.cat)+'</span>'+
-      '<span style="font-size:11px;color:var(--muted)">'+a.date+'</span></div>'+
-      '<div style="font-family:Syne;font-size:14px;font-weight:700;margin-bottom:4px">'+(i18n.currentLang==='hi'?a.titleHi:a.title)+'</div>'+
-      '<div style="font-size:12px;color:var(--muted);line-height:1.6">'+a.body+'</div>';
-    list.appendChild(d);
-  });
+  for (const id of overlays) {
+    const el = document.getElementById(id);
+    if (el) { el.remove(); return; }
+  }
+
+  // Priority 2: if in a quiz mid-session → show quit confirmation
+  const testQScr   = document.getElementById('test-q-scr');
+  const timedWrap  = document.getElementById('timed-test-wrap');
+  if (testQScr && testQScr.style.display !== 'none') {
+    _confirmQuitQuiz();
+    return;
+  }
+  // Timed quiz — already has "End Test" button but intercept back too
+  if (timedWrap && timedWrap.style.display !== 'none') {
+    if (typeof endTimedTest === 'function') endTimedTest();
+    return;
+  }
+
+  // Priority 3: if on quiz result screen → go back to test home
+  const resultScr = document.getElementById('test-result-scr');
+  if (resultScr && resultScr.style.display !== 'none') {
+    resetTestHome();
+    showPage('test', true);
+    return;
+  }
+
+  // Priority 4: navigate to previous page in stack
+  if (_pageStack.length > 1) {
+    _pageStack.pop(); // remove current
+    const prev = _pageStack[_pageStack.length - 1];
+    _currentPageId = prev;
+    // Don't push to stack again — this is a back navigation
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const pg = document.getElementById('page-' + prev);
+    if (pg) pg.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if ((n.getAttribute('onclick')||'').includes("'" + prev + "'")) n.classList.add('active');
+    });
+    const meta = PAGE_META[prev] || { title: prev, sub: '' };
+    const pgTitle = document.getElementById('pg-title');
+    const pgSub   = document.getElementById('pg-sub');
+    if (pgTitle) pgTitle.textContent = meta.title;
+    if (pgSub)   pgSub.textContent   = meta.sub;
+    if (prev === 'dashboard') renderDashboard();
+    return;
+  }
+
+  // Priority 5: already on root page — show exit confirmation
+  _confirmExitApp();
 }
 
-// ── ANALYTICS ──────────────────────────────────────────────────
-function renderAnalytics() {
-  var grid = el('analytics-overview-grid');
-  var dailyChart = el('analytics-daily-chart');
-  var paperWise = el('analytics-paper-wise');
-  var rankCard = el('analytics-rank-prediction');
-  if(!grid) return;
-  
-  var hist = appState.history;
-  var correct = hist.filter(function(h){return h.c}).length;
-  var totalQ = getAllQuestions().length;
-  var timeSpent = Analytics.getTimeSpent();
-  
-  grid.innerHTML = 
-    '<div class="stat-card"><div class="stat-accent" style="background:var(--navy)"></div><div class="stat-lbl">Total Attempted</div><div class="stat-val">'+hist.length+'</div><div class="stat-delta" style="color:var(--muted)">of '+totalQ+' available</div></div>'+
-    '<div class="stat-card"><div class="stat-accent" style="background:var(--success)"></div><div class="stat-lbl">Correct</div><div class="stat-val">'+correct+'</div><div class="stat-delta" style="color:var(--muted)">'+(hist.length>0?Math.round(correct/hist.length*100):0)+'% accuracy</div></div>'+
-    '<div class="stat-card"><div class="stat-accent" style="background:var(--saff)"></div><div class="stat-lbl">Time Invested</div><div class="stat-val">'+timeSpent.display+'</div><div class="stat-delta" style="color:var(--muted)">total study time</div></div>'+
-    '<div class="stat-card"><div class="stat-accent" style="background:#7C3AED"></div><div class="stat-lbl">SRS Mastered</div><div class="stat-val">'+SRS.getStats().mastered+'</div><div class="stat-delta" style="color:var(--muted)">long-term memory</div></div>';
-  
-  // Daily chart (last 7 days as bar chart)
-  if(dailyChart) {
-    var daily = Analytics.getDailyStats(7);
-    var maxQ = Math.max.apply(null, daily.map(function(d){return d.total})) || 1;
-    var h = '<div class="sec-hd"><div class="sec-title">📊 Daily Activity (7 days)</div></div>';
-    h += '<div style="display:flex;align-items:flex-end;gap:8px;height:120px;padding-top:10px">';
-    daily.forEach(function(d){
-      var barH = Math.max(d.total/maxQ*100, 2);
-      var color = d.accuracy>=70?'var(--success)':d.accuracy>=40?'var(--warn)':'var(--danger)';
-      if(d.total===0) color='var(--border)';
-      h += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">';
-      h += '<div style="font-size:10px;font-weight:700;color:var(--muted)">'+d.total+'</div>';
-      h += '<div style="width:100%;height:'+barH+'%;background:'+color+';border-radius:4px 4px 0 0;min-height:4px"></div>';
-      h += '<div style="font-size:9px;color:var(--muted)">'+d.label+'</div></div>';
-    });
-    h += '</div>';
-    dailyChart.innerHTML = h;
-  }
-  
-  // Paper-wise
-  if(paperWise) {
-    var pw = Analytics.getPaperWiseStats();
-    var h2 = '<div class="sec-hd"><div class="sec-title">📘 Paper-wise Performance</div></div>';
-    var papers = {paper1:'Paper 1 (GS)',paper2:'Paper 2 (CSAT)',paper3:'Paper 3 (MP GK)'};
-    var colors = {paper1:'var(--navy)',paper2:'#7C3AED',paper3:'var(--saff)'};
-    Object.entries(papers).forEach(function(e){
-      var k=e[0],name=e[1];
-      var data = pw[k]||{total:0,correct:0};
-      var acc = data.total>0?Math.round(data.correct/data.total*100):0;
-      h2 += '<div class="weak-item"><div class="weak-name" style="width:140px">'+name+'</div>'+
-        '<div class="weak-bar-wrap"><div class="weak-bar" style="width:'+Math.max(acc,2)+'%;background:'+colors[k]+'"></div></div>'+
-        '<div class="weak-pct" style="color:'+colors[k]+'">'+acc+'% ('+data.total+')</div></div>';
-    });
-    paperWise.innerHTML = h2;
-  }
-  
-  // Rank prediction
-  if(rankCard) {
-    var rp = Analytics.getRankPrediction();
-    if(rp) {
-      rankCard.innerHTML = '<div style="text-align:center;padding:10px"><div style="font-family:Syne;font-size:16px;font-weight:800;color:'+rp.color+'">'+rp.label+'</div><div style="font-size:28px;font-weight:800;color:'+rp.color+';margin:8px 0">Predicted Rank: '+rp.rank+'</div><div style="font-size:12px;color:var(--muted)">Based on '+appState.history.length+' questions attempted. Keep practicing to improve!</div></div>';
-    } else {
-      rankCard.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Complete at least 50 questions to see rank prediction</div>';
+function _confirmQuitQuiz() {
+  if (document.getElementById('quit-quiz-confirm')) return;
+  const el = document.createElement('div');
+  el.id = 'quit-quiz-confirm';
+  el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:999998;display:flex;align-items:center;justify-content:center;padding:30px';
+  el.innerHTML = `
+    <div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:320px;width:100%;text-align:center">
+      <div style="font-size:40px;margin-bottom:12px">🚪</div>
+      <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:#1E293B;margin-bottom:8px">Quit Quiz?</div>
+      <div style="font-size:13px;color:#64748B;margin-bottom:22px">Your progress will be lost. Are you sure?</div>
+      <div style="display:flex;gap:10px">
+        <button onclick="document.getElementById('quit-quiz-confirm').remove()"
+          style="flex:1;padding:12px;background:#F1F5F9;color:#374151;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer">Keep Going</button>
+        <button onclick="document.getElementById('quit-quiz-confirm').remove();resetTestHome();showPage('test',true);"
+          style="flex:1;padding:12px;background:#DC2626;color:#fff;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer">Quit</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+}
+
+let _exitConfirmTimeout = null;
+function _confirmExitApp() {
+  // Show toast-style "Press back again to exit" — standard Android pattern
+  if (_exitConfirmTimeout) {
+    // Second press within 2s → actually exit
+    clearTimeout(_exitConfirmTimeout);
+    _exitConfirmTimeout = null;
+    if (window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.App) {
+      Capacitor.Plugins.App.exitApp();
     }
+    return;
   }
+  showToast('Press back again to exit', '#374151');
+  _exitConfirmTimeout = setTimeout(() => { _exitConfirmTimeout = null; }, 2000);
 }
 
-// ── SETTINGS ───────────────────────────────────────────────────
-function toggleNotifications(enabled) {
-  if(enabled && 'Notification' in window) {
-    Notification.requestPermission().then(function(perm){
-      if(perm==='granted') { showToast('Notifications enabled! 🔔','#15803D'); localStorage.setItem('mpgk_notif','1'); }
-      else { showToast('Notification permission denied','#DC2626'); document.getElementById('setting-notifications').checked=false; }
-    });
-  } else { localStorage.removeItem('mpgk_notif'); }
+// Wire to Capacitor App plugin back button event
+function _initBackButton() {
+  try {
+    if (window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.App) {
+      Capacitor.Plugins.App.addListener('backButton', () => {
+        _handleBackButton();
+      });
+    }
+  } catch(e) { console.warn('Back button init failed:', e); }
 }
 
-// ── REFRESH UI (for language change) ──────────────────────────
-function refreshUI() {
-  document.querySelectorAll('[data-i18n]').forEach(function(el2){
-    var key = el2.getAttribute('data-i18n');
-    el2.textContent = i18n.t(key);
-  });
-  // Re-render current page
-  var activePage = document.querySelector('.page.active');
-  if(activePage) {
-    var id = activePage.id.replace('page-','');
-    if(id==='syllabus') renderSyllabus();
-    if(id==='studyplan') renderStudyPlan();
-    if(id==='currentaffairs') renderCurrentAffairs();
-    if(id==='analytics') renderAnalytics();
-    if(id==='dashboard') renderDashboard();
-  }
-}
+// Also handle browser popstate for web testing
+window.addEventListener('popstate', (e) => {
+  e.preventDefault();
+  _handleBackButton();
+});
 
-// ── PATCH showPage for new pages ──────────────────────────────
-var _origShowPage = showPage;
-showPage = function(id, skipTestReset) {
-  // Handle new pages
-  if(id==='syllabus'){_origShowPage(id,skipTestReset);renderSyllabus();return;}
-  if(id==='studyplan'){_origShowPage(id,skipTestReset);renderStudyPlan();return;}
-  if(id==='srsreview'){_origShowPage(id,skipTestReset);renderSRSReview();return;}
-  if(id==='bookmarkspage'){_origShowPage(id,skipTestReset);renderBookmarksPage();return;}
-  if(id==='currentaffairs'){_origShowPage(id,skipTestReset);renderCurrentAffairs();return;}
-  if(id==='analytics'){_origShowPage(id,skipTestReset);renderAnalytics();return;}
-  if(id==='settings'){_origShowPage(id,skipTestReset);return;}
-  _origShowPage(id, skipTestReset);
-};
-
-// ── PATCH doAns for SRS tracking ──────────────────────────────
-var _origDoAns = doAns;
-doAns = function(i) {
-  _origDoAns(i);
-  // Track in SRS
-  var m = appState.pool[appState.cur-0]; // current question (cur not incremented yet in doAns)
-  if(m) { SRS.recordAnswer(m, i === m.a); }
-};
-
-// ── ADD PAGE_META for new pages ───────────────────────────────
-PAGE_META.syllabus = {title:'Full Syllabus',sub:'Paper 1 (GS) + Paper 2 (CSAT) + Paper 3 (MP GK)'};
-PAGE_META.studyplan = {title:'Study Plan',sub:'30-day auto-generated plan'};
-PAGE_META.srsreview = {title:'Smart Review',sub:'Spaced Repetition — review at optimal intervals'};
-PAGE_META.bookmarkspage = {title:'Bookmarks',sub:'Your saved questions'};
-PAGE_META.currentaffairs = {title:'Current Affairs',sub:'Daily updates for MPPSC preparation'};
-PAGE_META.analytics = {title:'Analytics',sub:'Paper-wise performance & rank prediction'};
-PAGE_META.settings = {title:'Settings',sub:'Language, notifications, app preferences'};
-
-// ── UPDATE TOTAL Q BADGE ──────────────────────────────────────
-(function(){
-  var badge = el('total-q-badge');
-  if(badge) badge.textContent = getAllQuestions().length + '+';
-  updateSRSBadge();
-  updateBookmarkBadge();
-})();
+// Call on load
+window.addEventListener('DOMContentLoaded', () => {
+  // Push initial history state so popstate fires on back
+  history.pushState({ page: 'dashboard' }, '');
+  setTimeout(_initBackButton, 1000);
+});

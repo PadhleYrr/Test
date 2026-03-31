@@ -1,15 +1,46 @@
 {
   "appId": "com.padhleyrr.mppsc",
-  "appName": "MPPSC App",
+  "appName": "MP GK Portal",
   "webDir": "www",
   "server": {
     "androidScheme": "https"
   },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
   "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0,
+      "launchAutoHide": false,
+      "backgroundColor": "#1A237E",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
+    },
+    "StatusBar": {
+      "style": "Dark",
+      "backgroundColor": "#1A237E",
+      "overlaysWebView": false
+    },
+    "Keyboard": {
+      "resize": "body",
+      "style": "dark",
+      "resizeOnFullScreen": true
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
     "GoogleAuth": {
       "scopes": ["profile", "email"],
       "serverClientId": "77589429691-REPLACE_WITH_YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",
       "forceCodeForRefreshToken": true
+    },
+    "App": {
+      "backButtonStyle": "default"
     }
   }
 }
